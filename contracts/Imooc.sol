@@ -10,7 +10,7 @@ contract CourseList{
     }
 
     function createCourse(string memory _name, string memory _content, uint _target, uint _fundingPrice, uint _price, string memory _img) public {
-        address newCourse = new Course(_name, _content, _target, _fundingPrice, _price, _img);
+        address newCourse = new Course(ceo, _name, _content, _target, _fundingPrice, _price, _img);
         courses.push(newCourse);
     }
     function getCourse() public view returns(address [] memory){
@@ -36,6 +36,7 @@ contract CourseList{
 
 
 contract Course{
+    address public ceo;
     string public name;
     address public owner;
     string public content;
@@ -48,7 +49,7 @@ contract Course{
     uint public count;
     mapping(address => uint) users;
 
-    constructor (string memory _name, string memory _content, uint _target, uint _fundingPrice, uint _price, string memory _img) public {
+    constructor (address _ceo, string memory _name, string memory _content, uint _target, uint _fundingPrice, uint _price, string memory _img) public {
         name = _name;
         owner = msg.sender;
         content = _content;
@@ -59,10 +60,11 @@ contract Course{
         video = '';
         isOnline = false;
         count = 0;
+        ceo = _ceo
 
     }
 
-    function buy() payable {
+    function buy() public payable {
         // 1. user did not buy it
         require(users[msg.sender] == 0);
         if(isOnline){
@@ -76,10 +78,12 @@ contract Course{
         // 2. 如果收到的钱大于目标，上线
         if (target <= count*fundingPrice){
             if(isOnline){
-                uint value = 
+                uint value = msg.value;
+                ceo.transfer(value / 10);
+                owner.transfer(value - value/10);
             } else {
                 isOnline = true;
-                // 上线前的钱，应该在合约内部，众筹成功过直接转
+                // 上线前的钱，应该在合约内部，众筹成功直接转
                 owner.transfer(count*fundingPrice);
             }
         }
@@ -89,7 +93,7 @@ contract Course{
     }
 
 
-    function getDetail(){
-
+    function getDetail() public view {
+        
     }
 }
