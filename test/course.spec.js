@@ -38,7 +38,7 @@ describe('测试课程的智能合约',() =>{
                 web3.utils.toWei('4'),
                 "hash of picture"
                 ).send({
-                            from:accounts[9],
+                            from:accounts[0],
                             gas:"5000000"
                         })
         const address = await courseList.methods.getCourse().call()  
@@ -118,7 +118,7 @@ describe('测试课程的智能合约',() =>{
         const count = await course.methods.count().call(); 
         assert.equal(1, count);
         assert.equal(web3.utils.toWei('2'),value);
-
+        const detail = await course.methods.getDetail().call({from:accounts[0]});
         assert.equal(detail[9], '0');
         const detail2 = await course.methods.getDetail().call({from:accounts[2]});
         assert.equal(detail2[9], '1');
@@ -126,33 +126,117 @@ describe('测试课程的智能合约',() =>{
         assert.equal(detail3[9], '2');
     })
     it('上线前作者收不到钱', async()=>{
-        const isonline1 = await course.methods.isOnline().call()
-        console.log(isonline1)
+        // const isonline1 = await course.methods.isOnline().call()
+        // console.log(isonline1)
         const oldBalance = new BigNumber(await web3.eth.getBalance(accounts[9]));
         await course.methods.buy().send({
             from: accounts[3],
             value: web3.utils.toWei('2')
         })
         const newBalance = new BigNumber(await web3.eth.getBalance(accounts[9]));
-        const dif = newBalance.minus(oldBalance)
+        const diff = newBalance.minus(oldBalance)
         assert.equal(diff, 0)
-        const isonline12 = await course.methods.isOnline().call()
-        console.log(isonline12)
+        
     })
     
     it('上线前不能上传视频', async()=>{
         try {
-            await course.methods.addVideo('hash of the video')
+            await course.methods.addVideo('hash of the our video')
                 .send({
                     from: accounts[0],
-                    gas: '500000'
+                    gas: '5000000'
                 })
             assert.ok(false)
         } catch(e) {
-            assert.equal(e.name, 'RuntimeError')
-
+            assert.equal(e.name, 'c')
         }
-
     })
 
+    it('价格必须是众筹价格', async()=>{
+        try {
+            await course.methods.buy().send({
+                from: accounts[5],
+                value: web3.utils.toWei('1')
+            })
+            assert.ok(false)
+        } catch(e) {
+            assert.equal(e.name, 'c')
+        }
+    })
+
+    it('不能重复购买', async()=>{
+        try {
+            await course.methods.buy().send({
+                from: accounts[2],
+                value: web3.utils.toWei('2')
+            })
+            assert.ok(false)
+        } catch(e) {
+            assert.equal(e.name, 'c')
+        }
+    })
+
+    it('众筹结束后钱到账', async()=>{
+        await course.methods.buy().send({
+            from: accounts[4],
+            value: web3.utils.toWei('2')
+        })
+        const oldBalance = new BigNumber(await web3.eth.getBalance(accounts[0]));
+
+        await course.methods.buy().send({
+            from: accounts[5],
+            value: web3.utils.toWei('2')
+        })
+        const newBalance = new BigNumber(await web3.eth.getBalance(accounts[0]));
+        const diff = newBalance.minus(oldBalance)
+        assert.equal(diff, web3.utils.toWei('8'))
+        const count2 = await course.methods.count().call() 
+        assert.equal(count2, 4)
+        const isOnline2 = await course.methods.isOnline().call() 
+        assert.ok(isOnline2)
+    })
+
+    it('课程必须是线上价格', async()=>{
+        try {
+            await course.methods.buy().send({
+                from: accounts[6],
+                value: web3.utils.toWei('2')
+            })
+            assert.ok(false)
+        } catch(e) {
+            assert.equal(e.name, 'c')
+        }
+        await course.methods.buy().send({
+            from: accounts[6],
+            value: web3.utils.toWei('4')
+        })
+        const count = await course.methods.count().call() 
+        assert.equal(count, 5)
+    })
+
+    it('上线之后有分成', async()=>{
+        const oldBalance = new BigNumber(await web3.eth.getBalance(accounts[0]));
+        const oldBalanceCEO = new BigNumber(await web3.eth.getBalance(accounts[9]));
+        await course.methods.buy().send({
+            from: accounts[7],
+            value: web3.utils.toWei('4')
+        })
+        const newBalance = new BigNumber(await web3.eth.getBalance(accounts[0]));
+        const newBalanceCEO = new BigNumber(await web3.eth.getBalance(accounts[9]));
+
+        const diff = newBalance.minus(oldBalance)
+        const diff2 = newBalanceCEO.minus(oldBalanceCEO)
+        assert.equal(diff, web3.utils.toWei('3.6'))
+        assert.equal(diff2, web3.utils.toWei('0.4'))
+    })
+
+    it('上线后可以上传视频', async()=>{
+        await course.methods.addVideo('hash of the our video')
+            .send({
+                from: accounts[0],
+                gas: '5000000'
+            })
+        const video = await course.methods.video().call()
+        assert.equal(video, 'hash of the our video')
+    })
 })

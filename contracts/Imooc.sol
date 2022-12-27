@@ -68,8 +68,10 @@ contract Course{
         // 1. user did not buy it
         require(users[msg.sender] == 0);
         if(isOnline){
+            // 如果上线了 必须得用上线价格够买
             require(price == msg.value);
         } else {
+            // 如果没有上线了 必须得用众筹价格够买
             require(fundingPrice == msg.value);
         }
         users[msg.sender] = msg.value;
@@ -79,17 +81,16 @@ contract Course{
         if (target <= count*fundingPrice){
             if(isOnline){
                 uint value = msg.value;
+                // 4.上线后的钱ceo拿1成
                 ceo.transfer(value / 10);
                 owner.transfer(value - value/10);
             } else {
                 isOnline = true;
                 // 上线前的钱，应该在合约内部，众筹成功直接转
+                // 3. 上线前的钱ceo不拿
                 owner.transfer(count*fundingPrice);
             }
         }
-        // 3. 上线前的钱ceo不拿
-
-        // 4.上线后的钱ceo拿1成
     }
 
     function getDetail() public view returns(string, string, uint, uint ,uint, string, string, uint, bool, uint){
@@ -121,6 +122,7 @@ contract Course{
     function addVideo(string _video) public {
         require(msg.sender == owner);
         require(isOnline == true);
+
         video = _video;
     }
 }
