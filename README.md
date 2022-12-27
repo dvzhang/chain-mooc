@@ -24,3 +24,17 @@
     使用mocha
     断言使用node自己的assert
     本地部署环境，ganache-cli 测试虚拟环境
+
+课程
+    属性
+        owner 课程创建者
+        name 课程名字
+        content 课程简介
+        target 课程目标wei
+        fundingPrice 众筹价格
+        price 上线价格
+        img 课程头图
+        video 视频
+        count 多少人支持
+        isOnline 是否上线
+    payable

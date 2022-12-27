@@ -9,9 +9,10 @@ contract CourseList{
         ceo = msg.sender;
     }
 
-    function createCourse(string memory _name, string memory _content, uint _target, uint _fundingPrice, uint _price, string memory _img) public {
-        address newCourse = new Course(ceo, _name, _content, _target, _fundingPrice, _price, _img);
+    function createCourse(string memory _name, string memory _content, uint _target, uint _fundingPrice, uint _price, string memory _img) public returns(address){
+        address newCourse = new Course(ceo, msg.sender, _name, _content, _target, _fundingPrice, _price, _img);
         courses.push(newCourse);
+        return msg.sender;
     }
     function getCourse() public view returns(address [] memory){
         return courses;
@@ -47,11 +48,11 @@ contract Course{
     string public video;
     bool public isOnline;
     uint public count;
-    mapping(address => uint) users;
+    mapping(address => uint) public users;
 
-    constructor (address _ceo, string memory _name, string memory _content, uint _target, uint _fundingPrice, uint _price, string memory _img) public {
+    constructor (address _ceo, address _owner, string memory _name, string memory _content, uint _target, uint _fundingPrice, uint _price, string memory _img) public {
         name = _name;
-        owner = msg.sender;
+        owner = _owner;
         content = _content;
         target = _target;
         fundingPrice = _fundingPrice;
@@ -60,8 +61,7 @@ contract Course{
         video = '';
         isOnline = false;
         count = 0;
-        ceo = _ceo
-
+        ceo = _ceo;
     }
 
     function buy() public payable {
@@ -92,8 +92,35 @@ contract Course{
         // 4.上线后的钱ceo拿1成
     }
 
+    function getDetail() public view returns(string, string, uint, uint ,uint, string, string, uint, bool, uint){
+        uint role;
+        if (msg.sender == owner){
 
-    function getDetail() public view {
-        
+            role = 0;
+        } else if (users[msg.sender] > 0) {
+            role = 1;
+        } else {
+            role = 2;
+        }
+
+        return (
+            name,
+            content,
+            target,
+            fundingPrice,
+            price,
+            img,
+            video,
+            count,
+            isOnline,
+            role
+        );
+
+    }
+
+    function addVideo(string _video) public {
+        require(msg.sender == owner);
+        require(isOnline == true);
+        video = _video;
     }
 }

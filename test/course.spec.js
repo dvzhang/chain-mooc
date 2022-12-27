@@ -2,6 +2,8 @@ const path = require('path');
 const assert = require('assert');
 const Web3 = require('web3')
 const ganache = require('ganache-cli')
+const BigNumber = require('bignumber.js')
+
 
 const web3 = new Web3(ganache.provider())
 const CourseList = require(path.resolve(__dirname, "../src/compiled/CourseList.json"))
@@ -28,16 +30,15 @@ describe('测试课程的智能合约',() =>{
     it('测试添加课程', async()=>{
         const oldAddress = await courseList.methods.getCourse().call()  
         assert.equal(oldAddress.length, 0)
-        await courseList.methods.createCourse(
+        const newOwner = await courseList.methods.createCourse(
                 "Solidity Course",
                 "develop Dapp",
                 web3.utils.toWei('8'),
                 web3.utils.toWei('2'),
                 web3.utils.toWei('4'),
                 "hash of picture"
-                )
-                        .send({
-                            from:accounts[0],
+                ).send({
+                            from:accounts[9],
                             gas:"5000000"
                         })
         const address = await courseList.methods.getCourse().call()  
@@ -63,9 +64,9 @@ describe('测试课程的智能合约',() =>{
         assert.equal(img, "hash of picture")
         assert.ok(!isOnline)
         assert.equal(count, 0)
+        
     })
     it('删除功能', async()=>{
-
         await courseList.methods.createCourse(
             "Solidity Course123",
             "develop Dapp",
@@ -105,6 +106,53 @@ describe('测试课程的智能合约',() =>{
         });
         assert.ok(!isCeo2);
     })
+    it('金钱转换', async()=>{
+        assert.equal(web3.utils.toWei('2'),'2000000000000000000');
+    })
+    it('课程购买', async()=>{
+        await course.methods.buy().send({
+            from: accounts[2],
+            value: web3.utils.toWei('2')
+        })
+        const value = await course.methods.users(accounts[2]).call();
+        const count = await course.methods.count().call(); 
+        assert.equal(1, count);
+        assert.equal(web3.utils.toWei('2'),value);
+
+        assert.equal(detail[9], '0');
+        const detail2 = await course.methods.getDetail().call({from:accounts[2]});
+        assert.equal(detail2[9], '1');
+        const detail3 = await course.methods.getDetail().call({from:accounts[3]});
+        assert.equal(detail3[9], '2');
+    })
+    it('上线前作者收不到钱', async()=>{
+        const isonline1 = await course.methods.isOnline().call()
+        console.log(isonline1)
+        const oldBalance = new BigNumber(await web3.eth.getBalance(accounts[9]));
+        await course.methods.buy().send({
+            from: accounts[3],
+            value: web3.utils.toWei('2')
+        })
+        const newBalance = new BigNumber(await web3.eth.getBalance(accounts[9]));
+        const dif = newBalance.minus(oldBalance)
+        assert.equal(diff, 0)
+        const isonline12 = await course.methods.isOnline().call()
+        console.log(isonline12)
+    })
     
+    it('上线前不能上传视频', async()=>{
+        try {
+            await course.methods.addVideo('hash of the video')
+                .send({
+                    from: accounts[0],
+                    gas: '500000'
+                })
+            assert.ok(false)
+        } catch(e) {
+            assert.equal(e.name, 'RuntimeError')
+
+        }
+
+    })
 
 })

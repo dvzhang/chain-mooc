@@ -6,6 +6,7 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "bignumber.js": "^9.1.1",
     "ganache": "^7.7.1",
     "ganache-cli": "^6.12.2",
     "mocha": "^10.2.0",
@@ -31,7 +32,6 @@
     "rebuild": "npm run compile && mocha",
     "prerebuild:w": "npm run rebuild",
     "rebuild:w": "onchange 'contracts/*.sol' 'test/*.js' -- npm run rebuild"
-
   },
   "eslintConfig": {
     "extends": [
