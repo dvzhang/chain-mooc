@@ -38,3 +38,8 @@
         count 多少人支持
         isOnline 是否上线
     payable
+
+
+部署
+    infura.io 部署服务
+        https://sepolia.infura.io/v3/dfb9707563294927a29279a9d0491258
